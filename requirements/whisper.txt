@@ -1,0 +1,8 @@
+# envs/whisper: Whisper large-v3 speech model, frame extraction (OpenCV), review page. Needs an NVIDIA GPU with CUDA.
+# python -m venv envs/whisper ; envs/whisper/Scripts/python -m pip install -r requirements/whisper.txt
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch==2.6.0+cu124
+openai-whisper==20250625
+opencv-python==4.13.0.92
+numpy
+pillow

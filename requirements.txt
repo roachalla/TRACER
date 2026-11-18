@@ -1,0 +1,6 @@
+anthropic>=0.87
+keyring>=25
+latex2mathml>=3.77
+numpy
+pillow  # figure display and de-duplication
+

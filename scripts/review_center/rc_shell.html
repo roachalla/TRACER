@@ -1,0 +1,63 @@
+<a class=skip href="#cards">Skip to the review questions</a>
+<header class=rc-top>
+  <div class=rc-brand><b>TRACER</b> review center</div>
+  <div class=rc-title>%%TITLE%%</div>
+  <div class=rc-prog aria-live=polite><span id=progtxt></span><span class=bar aria-hidden=true><i id=progbar></i></span></div>
+  <div class=rc-who>
+    <label>I am the <select id=role><option value=designer>designer</option><option value=professor>professor</option></select></label>
+    <input id=name placeholder="Your name" aria-label="Your name" autocomplete=name>
+    <input id=demail type=email placeholder="Designer's email" aria-label="Designer's email (used by the Email button)" autocomplete=email>
+  </div>
+  <div class=rc-actions>
+    <button type=button id=save class=primary title="Save your decisions and comments to a file. Save it in the shared OneDrive folder, next to this page.">Save feedback</button>
+    <button type=button id=load title="Open a feedback file you saved earlier">Open saved</button>
+    <button type=button id=mail title="Open an Outlook email with a summary of your feedback">Email summary</button>
+    <button type=button id=helpbtn aria-label="How to use this page">?</button>
+  </div>
+</header>
+<div class=rc-main>
+  <main id=doc class=pane tabindex=-1 aria-label="The textbook as students will see it">
+    <div class=doc-tools>
+      <label><input type=checkbox id=teachtog checked> Show teaching materials</label>
+      <span class=mut>Select any text to comment on it. Hover an equation, figure or box for its comment button.</span>
+    </div>
+    <article class=page id=page>%%DOC%%</article>
+  </main>
+  <aside id=rail class=pane aria-label="Review questions">
+    <p id=highbar role=status hidden></p>
+    <div class=filters role=toolbar aria-label="Show">
+      <button type=button data-f=open aria-pressed=true>To do</button>
+      <button type=button data-f=all>All</button>
+      <button type=button data-f=equations>Equations</button>
+      <button type=button data-f=text>Text</button>
+      <button type=button data-f=speech>Speech</button>
+      <button type=button data-f=figures>Figures</button>
+      <button type=button data-f=teaching>Teaching</button>
+      <button type=button data-f=comments>Comments</button>
+      <button type=button data-f=settled title="Questions TRACER answered itself from other video frames and the professor's words, with the evidence">Settled by TRACER</button>
+    </div>
+    <div id=cards>%%CARDS%%</div>
+    <p id=empty class=mut hidden>Nothing here. Switch to <b>All</b> to see decided items.</p>
+  </aside>
+</div>
+<svg id=link aria-hidden=true><path /></svg>
+<button type=button id=cbtn hidden>Comment</button>
+<input type=file id=loadfile accept=".json,application/json" hidden>
+<div id=toast role=status aria-live=polite></div>
+<dialog class=zoomed id=zoomdlg aria-label="Enlarged image"><img alt=""><p></p><button type=button>Close</button></dialog>
+<dialog id=helpdlg aria-labelledby=helph>
+  <h2 id=helph>How to review</h2>
+  <ol>
+    <li><b>Left:</b> the textbook exactly as students will get it, including the teaching materials (takeaways, study questions,
+      glossary; untick <i>Show teaching materials</i> to see the plain edition).</li>
+    <li><b>Right:</b> one card for each thing that needs a person. Click a card to jump to its place in the text; click a numbered
+      marker in the text to jump to its card.</li>
+    <li>For each card choose <b>Looks right</b>, <b>Needs a fix</b> or <b>Ask</b>. For a sentence or equation, <i>Needs a fix</i>
+      lets you type the corrected version; math goes between dollar signs, for example <code>$\omega^2 = gk\tanh(kH)$</code>.</li>
+    <li><b>Comment on anything:</b> select text in the textbook and press <i>Comment</i>.</li>
+    <li>Your work is kept in this browser as you go. Press <b>Save feedback</b> to save it to a file: the first time, choose the
+      shared OneDrive folder this page is in. After that, Save writes to the same file. Your designer receives it when OneDrive syncs.</li>
+    <li>To continue on another computer, open this page there and press <b>Open saved</b>.</li>
+  </ol>
+  <button type=button>Start reviewing</button>
+</dialog>

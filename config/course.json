@@ -1,0 +1,11 @@
+{
+  "_help": "Course settings. Copy this file to config/course.local.json (git-ignored) and edit that copy; it overrides these values.",
+  "course": "Course",
+  "_course": "Shown in page titles and breadcrumbs when the video file name does not start with a course code such as ABCD123_.",
+  "subject": "science and engineering",
+  "_subject": "The peer reviewer is told it is 'a university instructor in <subject>'.",
+  "subject_short": "science/engineering",
+  "_subject_short": "The figure writer is told the chapter is 'a university <subject_short> textbook chapter'.",
+  "strip_prefix": [],
+  "_strip_prefix": "File-name prefixes removed when naming a video's results folder, for example [\"ABCD123_\"]."
+}

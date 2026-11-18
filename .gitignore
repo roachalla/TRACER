@@ -1,0 +1,14 @@
+work/
+__pycache__/
+.env
+runs/
+envs/
+*.log
+run_log.txt
+models/
+*.mp4
+*.m4a
+*.wav
+TRACER feedback*.json
+dev/
+config/course.local.json

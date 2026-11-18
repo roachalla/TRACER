@@ -1,0 +1,6 @@
+# envs/parakeet: Parakeet TDT 0.6B v3 speech model through ONNX Runtime (GPU if available). Also runs scripts/get_models.py.
+# python -m venv envs/parakeet ; envs/parakeet/Scripts/python -m pip install -r requirements/parakeet.txt
+onnx-asr==0.12.0
+onnxruntime-gpu==1.31.1
+huggingface_hub
+numpy

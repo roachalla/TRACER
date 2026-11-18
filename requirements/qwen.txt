@@ -1,0 +1,8 @@
+# envs/qwen: Qwen3-ASR-1.7B speech model. Needs an NVIDIA GPU with CUDA (about 5 GB of video memory).
+# python -m venv envs/qwen ; envs/qwen/Scripts/python -m pip install -r requirements/qwen.txt
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+qwen-asr==0.0.6
+transformers==4.57.6
+accelerate
+numpy
