@@ -4,190 +4,134 @@
 
 *Accessible transcripts with equations and figures from lecture videos.*
 
-TRACER is built to create accessible transcripts and study materials from challenging videos with layers of complex content and/or where captions alone fall short: poor room audio, strong accents, specialized vocabulary. TRACER does not add content: no outside facts, new examples or invented figures. The process can of reconstruction relies on only the transcript and
-the slides, and every sentence has to be traceable back to those sources. The optional teaching edition (takeaways, study questions, glossary) is built only from the chapter's own text and audited item by item.
+TRACER is built to create accessible transcripts and study materials from challenging videos with layers of complex content
+and/or where captions alone fall short: poor room audio, strong accents, specialized vocabulary. Its goal is to stay as true
+as possible to what the instructor taught.
 
 > **Before you start: TRACER expects videos that are already split into topics.** It is built for lecture capture that has
 > been cut into short segments, one topic each (often called lecturettes, typically 5 to 20 minutes). Each video becomes one
 > chapter. TRACER does not analyze a full-length class recording or break it into segments; do that first with your video
 > editor or lecture-capture platform.
 
-| | What happens |
-|---|---|
-| **Transcribe** | Three speech engines (Whisper, Qwen3-ASR, Parakeet) transcribe the audio independently, on your own GPU. |
-| **Reconstruct** | Where the engines disagree, Claude settles it using the slide as evidence, and a second model checks every fix. Slides are read by Mathpix, then a vision model corrects that reading against the slide image (arrows, annotations, misread symbols); a correction that changes or adds a number, or adds anything the model cannot see, is rejected and listed for review. Long student questions are moved out of the instructor's text (see Limits). |
-| **Audit** | Code rules (numbers, quotes, sources, dropped content), an evidence auditor, a peer reviewer that sees only the finished page, and an equation repair loop that re-reads flagged equations against the slide image. |
-| **Caption** | Corrected captions (WebVTT) and a clean, time-stamped transcript. Caption times are estimated: words are spread evenly across each Whisper segment, not timed one by one. |
-| **Encode** | Math as real MathML (web) and editable equations (Word); figures with alt text and layered descriptions following an image-description guide. |
-| **Review** | Questions the slide readers raise are first re-checked against other video frames and the professor's words; answers a second model confirms are settled, with their evidence. Everything still open goes to a review page for a person to decide. |
+## How the pipeline works
 
+**`run_video.py`** runs the following sequence of scripts to process each video:
 
-**Everything TRACER makes is a draft until a person reviews it.** Student pages and Word files say "Draft" until the
-professor's review is applied, and the transcript and captions stay in the review folder until someone approves them (see
-Reviewing).
-
-## Quick start (desktop app)
-
-1. Do the one-time **Setup** below.
-2. `python olc_gui.py`
-3. Choose a video or a folder, the video type (or let TRACER detect it), what to make, where results go, and your API keys.
-   Press **Start**.
-
-The app shows a time and cost estimate first (it learns your computer's speed after the first run), a live log, and a
-spending limit. Every Claude call checks the limit before it is sent, so a run stops before going over it; finished work is
-kept, and running again with a higher limit continues where it stopped.
-
-## Video types
-
-| Type | Handling |
-|---|---|
-| 1 Classroom recording (camera films a screen or board, instructor in front) | Transcript and captions only: slides would come out unreliable. You are asked first. |
-| 2 Board only | Board mode: dense frames, sections by topic. |
-| 3 Screen share (e.g. Zoom) | Slides. |
-| 4 Screen share with a webcam corner | Slides; the webcam corner is hidden. |
-| 5 Edited video or PowerPoint recording | Slides. |
-
-Whatever type you choose, TRACER still looks for a webcam picture in the frames. If it finds one in a type 2, 3 or 5 video,
-it hides it from the slide images and warns you, so camera footage of people never reaches Claude or the outputs by mistake.
+1. **`video_profile.py`** checks what kind of video it is (screen share, board, classroom camera), finds the slide area and
+   hides any webcam picture.
+2. **`extract_frames.py`** samples the video and keeps one frame for each finished state of a slide.
+3. **`mathpix_ocr.py`** reads the text and math on each kept frame with Mathpix OCR.
+4. **`fix_ocr.py`** has a Claude vision model check each OCR reading against the slide image and correct misreadings.
+   Corrections that change numbers or add things the model cannot see are rejected and flagged.
+5. **`asr_bench_whisper_pt.py`, `asr_bench.py`** transcribe the audio three times, with Whisper, Qwen3-ASR and Parakeet, on
+   your own GPU.
+6. **`gap_finder.py`** lines up the three transcripts and lists every place they disagree.
+7. **`speaker_split.py`** separates student voices from the instructor's.
+8. **`resolve_gaps.py`** has Claude settle each disagreement using the slide as evidence; a second model checks every fix.
+9. **`build_page.py`** builds draft review pages that show each slide next to its transcript.
+10. **`textbook.py`** writes the chapter from the settled transcript and the slides, with every sentence citing its source.
+    It then audits the chapter (number and quote checks, an evidence auditor, a peer reviewer, equation repair), writes the
+    figure descriptions, and builds the web editions and the review page.
+11. **`transcript_only.py`** produces the clean, time-stamped transcript and the captions.
+12. **`make_docx.py`** makes the Word version with editable equations.
+13. **`package_outputs.py`** sorts everything into three folders: main deliverables, review resources, and audit logs.
 
 ## What you need
 
-- **Windows 10/11 with an NVIDIA GPU** (8 GB+ VRAM recommended). Whisper runs on CUDA only, so a GPU is required.
-  macOS/Linux are untested.
-- **ffmpeg** on your PATH; **pandoc** for the Word version (https://pandoc.org).
-- **Python 3.10+** for the app and the Claude steps.
-- About **20 GB of disk** for the speech environments and models.
-- **Your own API keys** (you are billed directly by each service):
-  - Anthropic (Claude): https://console.anthropic.com
-  - Mathpix (slide OCR): https://mathpix.com (app ID + app key)
+- **A Windows 10 or 11 computer with an NVIDIA graphics card** (8 GB of graphics memory or more). The speech engines run on
+  the graphics card. Mac and Linux have not been tested.
+- **About 20 GB of free disk space** for the speech models.
+- **Python 3.10 or newer** (https://www.python.org), **ffmpeg** (https://ffmpeg.org) and **pandoc** (https://pandoc.org).
+- **Two API keys**, one for the Claude API (from the Anthropic Console) and one for the Mathpix API (an app ID and app key).
+  These are pay-as-you-go developer keys billed to you by each service; a Claude.ai chat subscription or a Mathpix Snip
+  subscription does not include them.
 
-**Cost:** expect **$0.05 to $0.08 per minute of video** for the full textbook (Claude plus Mathpix), and about $0.035 per
-minute for transcript and captions only. Lectures with many slides and poor audio cost the most. Every paid call is logged
-in the run's audit folder.
+**Cost:** a few cents per minute of video in Claude and Mathpix fees. Lectures with poor audio cost more. The app shows an
+estimate before each run and stops at the spending limit you set.
 
-**Time** depends mostly on the GPU, because the three speech engines run on it one after another. On the development laptop,
-a 13-minute lecture took about 40 minutes end to end. The app's estimate uses your own measured speed after the first run, and
-warns if speech recognition is much slower than expected (usually a sign the GPU is not being used).
+**Time:** depends mostly on your graphics card. Expect a run to take a few times the length of the video.
 
-## Setup (one time)
+## Setup and use
 
-Commands are for Windows PowerShell, run from the project folder.
+> [!TIP]
+> **Let Claude set it up for you.** A great way to use this tool is with Claude Code, in the Code tab of the Claude desktop
+> app. Point it at this repository (`https://github.com/roachalla/TRACER`) and ask it to download TRACER and set it up by
+> following this README. It can run the installation commands for you, check what is missing, and explain any errors. When
+> setup is done, ask it to start TRACER, and the app opens. Type your API keys into the app yourself rather than pasting
+> them into the chat.
 
-1. **The app and the Claude steps:**
-   ```
-   pip install -r requirements.txt
-   ```
-2. **Four speech and video environments** under `envs/`. They are separate on purpose: their packages conflict. Each
-   requirements file holds the versions TRACER was tested with.
-   ```
-   foreach ($e in "whisper","parakeet","qwen","speaker") {
-     python -m venv envs\$e
-     & envs\$e\Scripts\python -m pip install -r requirements\$e.txt
-   }
-   ```
-   The `whisper` and `qwen` files install the CUDA build of PyTorch. If your NVIDIA driver needs a different CUDA version,
-   change the `--extra-index-url` line (see https://pytorch.org).
-3. **Speech models** (about 6 GB, downloaded once into `models/`):
-   ```
-   envs\parakeet\Scripts\python scripts\get_models.py
-   ```
-   This fetches Parakeet TDT 0.6B v3 (NVIDIA, CC-BY-4.0) and Qwen3-ASR-1.7B (Qwen team, Apache-2.0) from Hugging Face.
-   Whisper large-v3 (OpenAI, MIT) downloads itself the first time it runs.
-4. **Check:** start the app and press **Check setup**. It lists anything missing and how to fix it.
+There are four steps:
 
-Environments and models can live elsewhere: set `OLC_PY_CV` (whisper), `OLC_PY_PARA`, `OLC_PY_QWEN`, `OLC_PY_SPK` to each
-environment's `python.exe`, and `OLC_MODELS_DIR` to the models folder. Which Claude model does each job, and the prices used
-for the spend log, are set in `config/models.json`.
+1. Get your API keys.
+2. Install the speech models and set up the speech and video environments (one time).
+3. Use the app.
+4. Find your results.
 
-**Your course:** copy `config/course.json` to `config/course.local.json` (git-ignored) and set the course name and subject.
-The subject tells the peer reviewer and the figure writer what field the chapter is in. File names such as `W6_Z2_T1_Title`
-or `ABCD123_09-15_T2_Title` are grouped by week and lecture on the pages and in the index (see `scripts/course.py`).
+### 1. Get your API keys
 
-**Tests** for the text checks (no keys, models or video needed): `python -m unittest discover tests`
+- **Anthropic (Claude):** create a key at https://console.anthropic.com.
+- **Mathpix:** create an app ID and app key at https://mathpix.com.
 
-## Your API keys
+You type the keys into the app. Tick **Remember on this computer** to keep them in Windows Credential Manager; they are never
+written to a file or shown in the log.
 
-- Keys are typed into masked fields and held in memory. Tick **Remember on this computer** to store them in the operating
-  system's credential vault (Windows Credential Manager / macOS Keychain). They are never written to a file or to the log.
-- **Forget saved keys** removes them. **Check Claude key** makes a free, read-only call.
-- The pipeline ignores the `ANTHROPIC_API_KEY` environment variable on purpose, so a key meant for another tool is never used.
-- Command-line use: put `OLC_SCRIPT_API_KEY`, `MATHPIX_APP_ID`, `MATHPIX_APP_KEY` in a `.env` file at the project root
-  (git-ignored). Never commit it.
+### 2. Install the speech models and environments (one time)
 
-## Command line
+Open the TRACER folder in File Explorer, click the address bar, type `powershell` and press Enter. A PowerShell window opens
+in that folder. Copy each block below into it and press Enter, one at a time. Steps b and c download several gigabytes and
+can take a while.
 
+a. The app:
 ```
-python scripts/run_video.py VIDEO --runs RESULTS_DIR [options]
-python scripts/build_index.py RESULTS_DIR      # index pages for a folder of results
+pip install -r requirements.txt
+```
+b. The four speech and video environments:
+```
+foreach ($e in "whisper","parakeet","qwen","speaker") {
+  python -m venv envs\$e
+  & envs\$e\Scripts\python -m pip install -r requirements\$e.txt
+}
+```
+c. The speech models:
+```
+envs\parakeet\Scripts\python scripts\get_models.py
 ```
 
-| Option | What it does |
-|---|---|
-| `--budget USD` | Most this run may spend on Claude. Checked before every call; the run stops cleanly (exit code 4) when it is reached. Also settable as the `TRACER_BUDGET_USD` environment variable. |
-| `--type auto\|1-5` | Video type (see the table above). `auto` detects it. |
-| `--outputs` | Any of `textbook,teaching,word,transcript` (default: all). |
-| `--transcript-only` | Transcript and captions only; no slides, no textbook. |
-| `--free-only` | Run only the steps that cost nothing (frames, speech, gap finding, speaker split). |
-| `--title "..."` | Title shown on the pages (default: taken from the file name). |
-| `--mode slides\|board` | Override the slide/board decision. |
-| `--crop x,y,w,h` | The slide area in the frame, if automatic detection gets it wrong. |
-| `--webcam x,y,w,h` | A webcam overlay to hide, if automatic detection misses it. |
-| `--steps a,b,...` | Run only these steps: `frames, ocr, fixocr, asr, gaps, speakers, page, resolve, page2, textbook, transcript, docx, package`. |
-| `--force` | Redo the listed steps even if they finished before. Claude answers already received are reused from the cache at no cost. |
-| `--no-clarify` | Skip the loops that settle slide-reader questions and flagged sentences before asking a person (a little cheaper, more review cards). |
+### 3. Use the app
 
-Finished steps are skipped when you run a video again. Each step writes an end marker only when it completes, so a step
-that crashed is redone; answers already paid for are cached, so resuming costs little or nothing.
+Double-click **Start TRACER.bat** in the TRACER folder. Then, in the app:
 
-## What you get (per video, in `RESULTS_DIR/<video>/`)
+1. Press **Check setup** the first time. It lists anything missing and how to fix it.
+2. Choose a video, or a folder of videos.
+3. Choose the video type, or leave it on automatic.
+4. Tick what to make: textbook, teaching edition, Word document, transcript and captions.
+5. Choose where to save the results.
+6. Enter your API keys and a spending limit.
+7. Press **Start**. The app shows a time and cost estimate and a live log while it works.
 
-- **1 Main deliverables**: `final_textbook.html` (student textbook), `final_textbook_teaching.html` (teaching edition),
-  `textbook.docx` / `textbook_teaching.docx` (Word, editable equations). After approval, also `final_transcript.html`,
-  `transcript.txt` and `captions.vtt`.
-- **2 Review resources**: `review_center.html` (start here: see below), `review_textbook.html` (the text with each slide and a
-  plain-language **For you to check** list), `review_transcript.html` (uncertain passages and caption cues), `review_draft.html`.
-  Until they are approved, the transcript and captions are here too.
-- **3 Audit and logs**: `audit_summary.md` (checks and spend at a glance), every sentence with its sources, every transcript
-  fix with its evidence, every paid call, the raw slide OCR, and `figure_sources.json` (where each figure came from, for
-  copyright checks; fill it in, and TRACER keeps what you wrote on later runs).
-- `work/`: the pipeline's working files (needed for re-runs). `index_student.html` / `index_review.html` in `RESULTS_DIR`.
+### 4. What you get
 
-The three folders are rebuilt on every run. Only files TRACER made are replaced; files you add to them are kept.
+Each video gets its own results folder with three folders inside:
 
-## Reviewing: designer first, then the professor
+- **1 Main deliverables:** the textbook as a web page, the teaching edition, and the Word versions. The transcript and
+  captions are added here once someone has approved them.
+- **2 Review resources:** the review pages, and the transcript and captions until they are approved. The interactive review
+  page (`review_center.html`) is still being developed.
+- **3 Audit and logs:** a summary of the checks and the spending, every sentence with its sources, and every paid call.
 
-`review_center.html` is one page: the textbook exactly as students get it on the left (teaching materials can be hidden), and
-one card per item to check on the right. Cards and the text are linked: click a card to jump to its sentence, equation or
-figure; click a numbered marker in the text to jump to its card. For each card choose **Looks right**, **Needs a fix** (type the
-corrected sentence or equation) or **Ask**. Select any text to leave a comment. A red line at the top counts the serious
-items still open. Questions TRACER settled itself, from other video frames and the professor's words, are under **Settled by
-TRACER** with their evidence; some cards (formatting, figure sources) are shown to the designer only.
+Everything is a draft until it has been reviewed: student pages and Word files are marked "Draft" until the instructor's review
+is applied.
 
-1. Put the run folder in a OneDrive folder shared with the professor.
-2. The designer opens the review center (from the synced folder, in Edge or Chrome), reviews, and presses **Save feedback**,
-   saving the file in `2 Review resources`. Work is also kept in the browser, so the page can be closed and reopened.
-3. `python scripts/apply_review.py "2 Review resources/TRACER feedback - designer - <run>.json"` (from the run folder)
-   applies the corrections to every format (web, Word) at no cost and rebuilds the review center as the professor's version:
-   settled items are marked done, the designer's questions stay open.
-4. The professor reviews and saves the same way; OneDrive syncs the file back. **Email summary** opens an email to the
-   designer in the default mail program (Outlook, for most) with a summary. Run `apply_review.py` with both files for the
-   final version. Once the professor's file is applied, the "Draft" notice is removed from the student pages and Word files.
-5. `review_todo.md` lists what a script cannot apply: fixes described in words, questions and comments.
-6. When someone has checked the transcript and captions (`review_transcript.html`), run
-   `python scripts/apply_review.py --approve-transcript` from the run folder to move them to `1 Main deliverables`.
+## Reviewing (being tested)
 
-## Limits worth knowing
+The interactive review page is a feature we are testing now. It shows the chapter exactly as students will see it, with a card
+for each item that needs a person: a questioned sentence, equation or figure. The designer reviews first, then the instructor.
+For each card they choose **Looks right**, **Needs a fix** or **Ask**, can comment on any text, and save their feedback to a file
+in the shared folder. Applying that feedback to the chapter currently uses a script (`scripts/apply_review.py`).
 
-- A subject-matter expert should still review the output before students see it. The review pages exist for that.
-- Handwriting is read by OCR and by a vision model; disagreements are flagged, but a missed label (an omission) can only be
-  caught by a person.
-- Student voices: a different voice speaking for 10 seconds or more is moved out of the instructor's text. Shorter stretches
-  are flagged for review but left in, and very short remarks can be missed. Classroom recordings get a transcript only.
-- The writer sometimes has to guess what the professor is pointing at ("this one here"). Those sentences are checked, but a
-  wrong guess can still read smoothly, which is one reason the review step matters.
-- Accuracy has not yet been measured against a hand-checked reference, and the output has not been tested with learners.
-- Source videos, slides and generated pages are course material: `runs/`, `work/`, `envs/`, `models/`, media files and `.env`
-  are git-ignored. Keep any other folder of course material out of the repository too.
+## Disclaimer
+
+This is a test tool developed for a specific case study and is not a polished finished product.
 
 ## License
 
