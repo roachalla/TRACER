@@ -4,9 +4,8 @@
 
 *Accessible transcripts with equations and figures from lecture videos.*
 
-TRACER turns recorded, math-heavy lecture videos into accessible text that stays true to what the instructor taught. It is
-built for videos where captions alone fall short: poor room audio, accents, and handwritten equations that captions cannot
-carry. The goal is that a busy subject-matter expert reviews a short list of flagged items instead of re-watching the lecture.
+TRACER is built to create accessible transcripts and study materials from challenging videos with layers of complex content and/or where captions alone fall short: poor room audio, strong accents, specialized vocabulary. TRACER does not add content: no outside facts, new examples or invented figures. The process can of reconstruction relies on only the transcript and
+the slides, and every sentence has to be traceable back to those sources. The optional teaching edition (takeaways, study questions, glossary) is built only from the chapter's own text and audited item by item.
 
 > **Before you start: TRACER expects videos that are already split into topics.** It is built for lecture capture that has
 > been cut into short segments, one topic each (often called lecturettes, typically 5 to 20 minutes). Each video becomes one
@@ -22,9 +21,6 @@ carry. The goal is that a busy subject-matter expert reviews a short list of fla
 | **Encode** | Math as real MathML (web) and editable equations (Word); figures with alt text and layered descriptions following an image-description guide. |
 | **Review** | Questions the slide readers raise are first re-checked against other video frames and the professor's words; answers a second model confirms are settled, with their evidence. Everything still open goes to a review page for a person to decide. |
 
-TRACER does not add content: no outside facts, new examples or invented figures. The writer may use only the transcript and
-the slides, every sentence is checked against them, and anything it cannot trace is flagged. The optional teaching edition
-(takeaways, study questions, glossary) is built only from the chapter's own text and audited item by item.
 
 **Everything TRACER makes is a draft until a person reviews it.** Student pages and Word files say "Draft" until the
 professor's review is applied, and the transcript and captions stay in the review folder until someone approves them (see
